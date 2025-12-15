@@ -1,1 +1,5 @@
-# Syndic - RSS Reader
+# Syndic - A Simple RSS Reader
+
+## 🚧 ...Under construction... 🚧
+
+
