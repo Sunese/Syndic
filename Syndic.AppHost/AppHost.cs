@@ -27,7 +27,7 @@ var postgresServer = builder.AddPostgres("postgres")
   {
     service.Healthcheck = new()
     {
-      Test = ["CMD-SHELL, pg_isready -U postgres -d reader"],
+      Test = ["CMD-SHELL", "pg_isready -U postgres -d reader"],
       Interval = "10s",
       Retries = 5,
       StartPeriod = "30s",
@@ -35,7 +35,7 @@ var postgresServer = builder.AddPostgres("postgres")
     };
   });
 
-var postgresReaderDb = postgresServer.AddDatabase("readerdb", "reader");
+var postgresReaderDb = postgresServer.AddDatabase("syndic-db", "reader");
 
 var readerDbManager = builder.AddProject<Projects.Syndic_ReaderDbManager>("readerdb-manager")
   .WithReference(postgresReaderDb)
@@ -48,7 +48,7 @@ var readerDbManager = builder.AddProject<Projects.Syndic_ReaderDbManager>("reade
     service.DependsOn["postgres"] = new() { Condition = "service_healthy" };
   });
 
-var readerService = builder.AddProject<Projects.Syndic_ReaderService>("reader")
+var readerService = builder.AddProject<Projects.Syndic_ReaderService>("syndic-api")
   .WithReference(postgresReaderDb)
   .WaitFor(postgresReaderDb)
   .WaitForCompletion(readerDbManager)
@@ -64,7 +64,7 @@ var readerService = builder.AddProject<Projects.Syndic_ReaderService>("reader")
 // So we will use that, when building/deploying
 if (builder.ExecutionContext.IsRunMode)
 {
-  var frontend = builder.AddJavaScriptApp("frontend", "../Syndic.Frontend")
+  var frontend = builder.AddJavaScriptApp("syndic-frontend", "../Syndic.Frontend")
                   .WithUrl("http://localhost:5173")
                   .WaitFor(readerService)
                   .WithReference(readerService)
@@ -75,7 +75,7 @@ if (builder.ExecutionContext.IsRunMode)
 }
 else if (builder.ExecutionContext.IsPublishMode)
 {
-  var frontend = builder.AddNodeApp("frontend", "../Syndic.Frontend", "build")
+  var frontend = builder.AddNodeApp("syndic-frontend", "../Syndic.Frontend", "build")
                             .WaitFor(readerService)
                             .WithReference(readerService)
                             .WithBuildScript("build")
