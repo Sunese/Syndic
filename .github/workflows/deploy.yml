@@ -1,0 +1,62 @@
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            10.x.x
+
+      - name: Install Aspire CLI
+        run: curl -sSL https://aspire.dev/install.sh | bash
+      
+      - name: Aspire build
+        run: aspire do build
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get next version
+        uses: reecetech/version-increment@2024.10.1
+        id: version
+        with:
+          scheme: semver
+          increment: patch
+
+      - run: git tag ${{ steps.version.outputs.version }}
+      - run: git push origin ${{ steps.version.outputs.version }}
+
+      - name: Find generated frontend image
+        id: image
+        run: |
+          IMAGE=$(docker images syndic-frontend --format "{{.Repository}}:{{.Tag}}" | head -n 1)
+          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+
+      # First we re-build the image with label pointing back to the repo
+      # Unfortunately, as per Aspire 13.0.1, it is not possible to set labels
+      - name: Tag and push frontend image
+        run: |
+            echo "FROM ${{steps.image.outputs.image}}" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
+            docker tag temp ghcr.io/sunese/syndic/syndic-frontend:${{ steps.version.outputs.version }}
+            docker tag temp ghcr.io/sunese/syndic/syndic-frontend:latest
+            docker push ghcr.io/sunese/syndic/syndic-frontend:${{ steps.version.outputs.version }}
+            docker push ghcr.io/sunese/syndic/syndic-frontend:latest
