@@ -72,3 +72,19 @@ jobs:
             docker tag temp ghcr.io/sunese/syndic/syndic-frontend:latest
             docker push ghcr.io/sunese/syndic/syndic-frontend:${{ steps.version.outputs.version }}
             docker push ghcr.io/sunese/syndic/syndic-frontend:latest
+
+      - name: Tag and push api image
+        run: |
+            echo "FROM syndic-api" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
+            docker tag temp ghcr.io/sunese/syndic/syndic-api:${{ steps.version.outputs.version }}
+            docker tag temp ghcr.io/sunese/syndic/syndic-api:latest
+            docker push ghcr.io/sunese/syndic/syndic-api:${{ steps.version.outputs.version }}
+            docker push ghcr.io/sunese/syndic/syndic-api:latest
+
+      - name: Tag and push worker image
+        run: |
+            echo "FROM syndic-worker" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
+            docker tag temp ghcr.io/sunese/syndic/syndic-worker:${{ steps.version.outputs.version }}
+            docker tag temp ghcr.io/sunese/syndic/syndic-worker:latest
+            docker push ghcr.io/sunese/syndic/syndic-worker:${{ steps.version.outputs.version }}
+            docker push ghcr.io/sunese/syndic/syndic-worker:latest
