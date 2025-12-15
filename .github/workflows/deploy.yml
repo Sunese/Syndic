@@ -66,7 +66,7 @@ jobs:
       - name: Find generated frontend image
         id: image
         run: |
-          IMAGE=$(docker images syndic-frontend --format "{{.Repository}}:{{.Tag}}" | head -n 1)
+          IMAGE=$(docker images syndicfrontend --format "{{.Repository}}:{{.Tag}}" | head -n 1)
           echo "image=$IMAGE" >> $GITHUB_OUTPUT
 
       # First we re-build the image with label pointing back to the repo
@@ -81,7 +81,7 @@ jobs:
 
       - name: Tag and push api image
         run: |
-            echo "FROM syndic-api" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
+            echo "FROM syndicapi" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
             docker tag temp ghcr.io/sunese/syndic/syndic-api:${{ steps.version.outputs.version }}
             docker tag temp ghcr.io/sunese/syndic/syndic-api:latest
             docker push ghcr.io/sunese/syndic/syndic-api:${{ steps.version.outputs.version }}
@@ -89,7 +89,7 @@ jobs:
 
       - name: Tag and push worker image
         run: |
-            echo "FROM syndic-worker" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
+            echo "FROM syndicworker" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
             docker tag temp ghcr.io/sunese/syndic/syndic-worker:${{ steps.version.outputs.version }}
             docker tag temp ghcr.io/sunese/syndic/syndic-worker:latest
             docker push ghcr.io/sunese/syndic/syndic-worker:${{ steps.version.outputs.version }}
