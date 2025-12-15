@@ -37,7 +37,7 @@ var postgresServer = builder.AddPostgres("postgres")
 
 var postgresReaderDb = postgresServer.AddDatabase("syndic-db", "reader");
 
-var readerDbManager = builder.AddProject<Projects.Syndic_ReaderDbManager>("readerdb-manager")
+var readerDbManager = builder.AddProject<Projects.Syndic_ReaderDbManager>("syndic-worker")
   .WithReference(postgresReaderDb)
   .WaitFor(postgresServer)
   .WaitFor(postgresReaderDb, WaitBehavior.WaitOnResourceUnavailable)
