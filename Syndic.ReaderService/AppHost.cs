@@ -17,7 +17,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.AddNpgsqlDbContext<ReaderDbContext>("readerdb");
+builder.AddNpgsqlDbContext<ReaderDbContext>("syndicdb");
 
 builder.Services.AddSingleton<RssParser>();
 

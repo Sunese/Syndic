@@ -31,63 +31,63 @@ services:
       timeout: "10s"
       retries: 5
       start_period: "30s"
-  syndic-worker:
-    image: "${SYNDIC_WORKER_IMAGE}"
+  syndicworker:
+    image: "${SYNDICWORKER_IMAGE}"
     environment:
       OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
       OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
       OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
-      ConnectionStrings__syndic-db: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=reader"
-      SYNDIC-DB_HOST: "postgres"
-      SYNDIC-DB_PORT: "5432"
-      SYNDIC-DB_USERNAME: "postgres"
-      SYNDIC-DB_PASSWORD: "${POSTGRES_PASSWORD}"
-      SYNDIC-DB_URI: "postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/reader"
-      SYNDIC-DB_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres:5432/reader"
-      SYNDIC-DB_DATABASE: "reader"
+      ConnectionStrings__syndicdb: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=reader"
+      SYNDICDB_HOST: "postgres"
+      SYNDICDB_PORT: "5432"
+      SYNDICDB_USERNAME: "postgres"
+      SYNDICDB_PASSWORD: "${POSTGRES_PASSWORD}"
+      SYNDICDB_URI: "postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/reader"
+      SYNDICDB_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres:5432/reader"
+      SYNDICDB_DATABASE: "reader"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://syndic-dashboard:18889"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
-      OTEL_SERVICE_NAME: "syndic-worker"
+      OTEL_SERVICE_NAME: "syndicworker"
     depends_on:
       postgres:
         condition: "service_healthy"
     networks:
       - "aspire"
-  syndic-api:
-    image: "${SYNDIC_API_IMAGE}"
+  syndicapi:
+    image: "${SYNDICAPI_IMAGE}"
     environment:
       OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EXCEPTION_LOG_ATTRIBUTES: "true"
       OTEL_DOTNET_EXPERIMENTAL_OTLP_EMIT_EVENT_LOG_ATTRIBUTES: "true"
       OTEL_DOTNET_EXPERIMENTAL_OTLP_RETRY: "in_memory"
       ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true"
-      HTTP_PORTS: "${SYNDIC_API_PORT}"
-      ConnectionStrings__syndic-db: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=reader"
-      SYNDIC-DB_HOST: "postgres"
-      SYNDIC-DB_PORT: "5432"
-      SYNDIC-DB_USERNAME: "postgres"
-      SYNDIC-DB_PASSWORD: "${POSTGRES_PASSWORD}"
-      SYNDIC-DB_URI: "postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/reader"
-      SYNDIC-DB_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres:5432/reader"
-      SYNDIC-DB_DATABASE: "reader"
+      HTTP_PORTS: "${SYNDICAPI_PORT}"
+      ConnectionStrings__syndicdb: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=reader"
+      SYNDICDB_HOST: "postgres"
+      SYNDICDB_PORT: "5432"
+      SYNDICDB_USERNAME: "postgres"
+      SYNDICDB_PASSWORD: "${POSTGRES_PASSWORD}"
+      SYNDICDB_URI: "postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/reader"
+      SYNDICDB_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres:5432/reader"
+      SYNDICDB_DATABASE: "reader"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://syndic-dashboard:18889"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
-      OTEL_SERVICE_NAME: "syndic-api"
+      OTEL_SERVICE_NAME: "syndicapi"
     expose:
-      - "${SYNDIC_API_PORT}"
+      - "${SYNDICAPI_PORT}"
     depends_on:
       postgres:
         condition: "service_started"
-      syndic-worker:
+      syndicworker:
         condition: "service_completed_successfully"
     networks:
       - "aspire"
-  syndic-frontend:
-    image: "${SYNDIC_FRONTEND_IMAGE}"
+  syndicfrontend:
+    image: "${SYNDICFRONTEND_IMAGE}"
     environment:
       NODE_ENV: "production"
-      SYNDIC-API_HTTP: "http://syndic-api:${SYNDIC_API_PORT}"
-      services__syndic-api__http__0: "http://syndic-api:${SYNDIC_API_PORT}"
-      SYNDIC-API_HTTPS: "https://syndic-api:${SYNDIC_API_PORT}"
+      SYNDICAPI_HTTP: "http://syndicapi:${SYNDICAPI_PORT}"
+      services__syndicapi__http__0: "http://syndicapi:${SYNDICAPI_PORT}"
+      SYNDICAPI_HTTPS: "https://syndicapi:${SYNDICAPI_PORT}"
       PORT: "8000"
       AUTH_AUTHENTIK_ID: "${SYNDIC_FRONTEND_AUTHENTIK_CLIENT_ID}"
       AUTH_AUTHENTIK_CLIENT_SECRET: "${SYNDIC_FRONTEND_AUTHENTIK_CLIENT_SECRET}"
@@ -95,11 +95,11 @@ services:
       AUTH_SECRET: "${AUTHJS_SECRET}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://syndic-dashboard:18889"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
-      OTEL_SERVICE_NAME: "syndic-frontend"
+      OTEL_SERVICE_NAME: "syndicfrontend"
     ports:
       - "8080:8000"
     depends_on:
-      syndic-api:
+      syndicapi:
         condition: "service_started"
     networks:
       - "aspire"

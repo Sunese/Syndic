@@ -35,9 +35,9 @@ var postgresServer = builder.AddPostgres("postgres")
     };
   });
 
-var postgresReaderDb = postgresServer.AddDatabase("syndic-db", "reader");
+var postgresReaderDb = postgresServer.AddDatabase("syndicdb", "reader");
 
-var readerDbManager = builder.AddProject<Projects.Syndic_ReaderDbManager>("syndic-worker")
+var readerDbManager = builder.AddProject<Projects.Syndic_ReaderDbManager>("syndicworker")
   .WithReference(postgresReaderDb)
   .WaitFor(postgresServer)
   .WaitFor(postgresReaderDb, WaitBehavior.WaitOnResourceUnavailable)
@@ -48,7 +48,7 @@ var readerDbManager = builder.AddProject<Projects.Syndic_ReaderDbManager>("syndi
     service.DependsOn["postgres"] = new() { Condition = "service_healthy" };
   });
 
-var readerService = builder.AddProject<Projects.Syndic_ReaderService>("syndic-api")
+var readerService = builder.AddProject<Projects.Syndic_ReaderService>("syndicapi")
   .WithReference(postgresReaderDb)
   .WaitFor(postgresReaderDb)
   .WaitForCompletion(readerDbManager)
@@ -64,29 +64,28 @@ var readerService = builder.AddProject<Projects.Syndic_ReaderService>("syndic-ap
 // So we will use that, when building/deploying
 if (builder.ExecutionContext.IsRunMode)
 {
-  var frontend = builder.AddJavaScriptApp("syndic-frontend", "../Syndic.Frontend")
+  var frontend = builder.AddJavaScriptApp("syndicfrontend", "../Syndic.Frontend")
                   .WithUrl("http://localhost:5173")
                   .WaitFor(readerService)
                   .WithReference(readerService)
                   .WithEnvironment("AUTH_AUTHENTIK_ID", syndicAuthentikClientId)
                   .WithEnvironment("AUTH_AUTHENTIK_CLIENT_SECRET", syndicAuthentikClientSecert)
-                  .WithEnvironment("AUTH_AUTHENTIK_ISSUER", authentikIssuerUrl)
-                  .WithEnvironment("AUTH_SECRET", authJsSecret);
+                  .WithEnvironment("AUTH_SECRET", authJsSecret)
+                  .WithEnvironment("AUTH_AUTHENTIK_ISSUER", authentikIssuerUrl);
 }
 else if (builder.ExecutionContext.IsPublishMode)
 {
-  var frontend = builder.AddNodeApp("syndic-frontend", "../Syndic.Frontend", "build")
+  var frontend = builder.AddNodeApp("syndicfrontend", "../Syndic.Frontend", "build")
                             .WaitFor(readerService)
                             .WithReference(readerService)
                             .WithBuildScript("build")
                             .WithHttpEndpoint(8080, env: "PORT")
                             .WithExternalHttpEndpoints()
+                            .PublishAsDockerComposeService((res, ser) => { })
                             .WithEnvironment("AUTH_AUTHENTIK_ID", syndicAuthentikClientId)
                             .WithEnvironment("AUTH_AUTHENTIK_CLIENT_SECRET", syndicAuthentikClientSecert)
-                            .WithEnvironment("AUTH_AUTHENTIK_ISSUER", authentikIssuerUrl)
                             .WithEnvironment("AUTH_SECRET", authJsSecret)
-                            .PublishAsDockerComposeService((res, ser) => { });
-  // .WithEnvironment("AUTH_TRUST_HOST", "true"); // this did not seem to work, I resorted to setting trustHost: true in Auth.JS config
+                            .WithEnvironment("AUTH_AUTHENTIK_ISSUER", authentikIssuerUrl);
 }
 else
 {

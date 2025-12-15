@@ -4,7 +4,7 @@ import { getRequestEvent } from "$app/server";
 import { getToken } from "@auth/core/jwt";
 import { AUTH_SECRET } from "$env/static/private";
 import { error, type ServerInit } from "@sveltejs/kit";
-import { READER_HTTP } from '$env/static/private';
+import { SYNDICAPI_HTTP } from '$env/static/private';
 
 export const handle = async ({ event, resolve }) => {
   return authJSHandle({
@@ -15,7 +15,7 @@ export const handle = async ({ event, resolve }) => {
 
 export const init: ServerInit = async () => {
   client.setConfig({
-    baseUrl: READER_HTTP,
+    baseUrl: SYNDICAPI_HTTP,
   });
 
   client.interceptors.request.use(async (request, options) => {
