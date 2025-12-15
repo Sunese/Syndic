@@ -7,7 +7,7 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.AddServiceDefaults();
 builder.Services.AddHostedService<Worker>();
 
-builder.AddNpgsqlDbContext<ReaderDbContext>("readerdb", null,
+builder.AddNpgsqlDbContext<ReaderDbContext>("syndic-db", null,
     optionsBuilder => optionsBuilder.UseNpgsql(npgsqlBuilder =>
         npgsqlBuilder.MigrationsAssembly(typeof(Program).Assembly.GetName().Name)));
 
