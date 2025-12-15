@@ -3,6 +3,12 @@ on:
   push:
     branches:
       - main
+    paths:
+      - Syndic.Frontend/**
+      - Syndic.ReaderDb/**
+      - Syndic.ReaderDbManager/**
+      - Syndic.ReaderService/**
+      - Syndic.ServiceDefaults/**
 
 jobs:
   build:
