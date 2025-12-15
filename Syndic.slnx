@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Syndic.AppHost/Syndic.AppHost.csproj" />
+  <Project Path="Syndic.ReaderDb/Syndic.ReaderDb.csproj" />
+  <Project Path="Syndic.ReaderDbManager/Syndic.ReaderDbManager.csproj" />
+  <Project Path="Syndic.ReaderService/Syndic.ReaderService.csproj" />
+  <Project Path="Syndic.ServiceDefaults/Syndic.ServiceDefaults.csproj" />
+</Solution>

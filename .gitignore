@@ -1,0 +1,39 @@
+obj/
+bin/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Build outputs
+*.log
+*.cache/
+
+# SQLite local dev databases
+*.db
+*.db-shm
+*.db-wal
+
+# dotnet tools and secrets
+.vs/
+.venv/
+.toolstarget
+*.swp
+
+*.env*
+!.env.example
