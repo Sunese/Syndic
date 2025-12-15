@@ -16,6 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -25,15 +32,22 @@ jobs:
       - name: Install Aspire CLI
         run: curl -sSL https://aspire.dev/install.sh | bash
       
+      # Note 1: Aspire will prompt for external parameters (secrets), hence we use `--non-interactive`
+      #         but we don't worry about the parameters for now, we are just trying things out :D
+      # Note 2: In Aspire 13.0, the statuscode will always be 0, even if one of the steps fail
+      #         for this reason, we have this very ugly hack that checks for the "✓ PIPELINE SUCCEEDED" line
+      #         Seems like this will be fixed in 13.1 though: https://github.com/dotnet/aspire/pull/12923
+      # Note 3: For now we run `aspire publish` only to make it generate a .env file with expected entries
+      #         Maybe we can use this to check if there are changes to the docker-compose file in the root
       - name: Aspire build
-        run: aspire do build
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          aspire publish
+          tmpfile=$(mktemp)
+          aspire do build --non-interactive --log-level debug 2>&1 | tee "$tmpfile"
+          if ! grep -q "✓ PIPELINE SUCCEEDED" "$tmpfile"; then
+            echo "Aspire deploy seemed to have failed, success message not found."
+            exit 1
+          fi
 
       - name: Get next version
         uses: reecetech/version-increment@2024.10.1
