@@ -38,7 +38,7 @@ jobs:
 
       - name: Install Aspire CLI
         run: curl -sSL https://aspire.dev/install.sh | bash
-      
+
       # Note 1: Aspire will prompt for external parameters (secrets), hence we use `--non-interactive`
       #         but we don't worry about the parameters for now, we are just trying things out :D
       # Note 2: In Aspire 13.0, the statuscode will always be 0, even if one of the steps fail
@@ -73,24 +73,24 @@ jobs:
       # Unfortunately, as per Aspire 13.0.1, it is not possible to set labels
       - name: Tag and push frontend image
         run: |
-            echo "FROM ${{steps.image.outputs.image}}" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
-            docker tag temp ghcr.io/sunese/syndic/syndic-frontend:${{ steps.version.outputs.version }}
-            docker tag temp ghcr.io/sunese/syndic/syndic-frontend:latest
-            docker push ghcr.io/sunese/syndic/syndic-frontend:${{ steps.version.outputs.version }}
-            docker push ghcr.io/sunese/syndic/syndic-frontend:latest
+          echo "FROM ${{steps.image.outputs.image}}" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
+          docker tag temp ghcr.io/sunese/syndic/frontend:${{ steps.version.outputs.version }}
+          docker tag temp ghcr.io/sunese/syndic/frontend:latest
+          docker push ghcr.io/sunese/syndic/frontend:${{ steps.version.outputs.version }}
+          docker push ghcr.io/sunese/syndic/frontend:latest
 
       - name: Tag and push api image
         run: |
-            echo "FROM syndicapi" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
-            docker tag temp ghcr.io/sunese/syndic/syndic-api:${{ steps.version.outputs.version }}
-            docker tag temp ghcr.io/sunese/syndic/syndic-api:latest
-            docker push ghcr.io/sunese/syndic/syndic-api:${{ steps.version.outputs.version }}
-            docker push ghcr.io/sunese/syndic/syndic-api:latest
+          echo "FROM syndicapi" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
+          docker tag temp ghcr.io/sunese/syndic/api:${{ steps.version.outputs.version }}
+          docker tag temp ghcr.io/sunese/syndic/api:latest
+          docker push ghcr.io/sunese/syndic/api:${{ steps.version.outputs.version }}
+          docker push ghcr.io/sunese/syndic/api:latest
 
       - name: Tag and push worker image
         run: |
-            echo "FROM syndicworker" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
-            docker tag temp ghcr.io/sunese/syndic/syndic-worker:${{ steps.version.outputs.version }}
-            docker tag temp ghcr.io/sunese/syndic/syndic-worker:latest
-            docker push ghcr.io/sunese/syndic/syndic-worker:${{ steps.version.outputs.version }}
-            docker push ghcr.io/sunese/syndic/syndic-worker:latest
+          echo "FROM syndicworker" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
+          docker tag temp ghcr.io/sunese/syndic/worker:${{ steps.version.outputs.version }}
+          docker tag temp ghcr.io/sunese/syndic/worker:latest
+          docker push ghcr.io/sunese/syndic/worker:${{ steps.version.outputs.version }}
+          docker push ghcr.io/sunese/syndic/worker:latest
