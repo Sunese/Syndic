@@ -36,7 +36,10 @@
   const doSignIn = async () => {
     try {
       signInClicked = true;
-      await signIn("authentik");
+      await signIn("authentik", {
+        redirect: true,
+        callbackUrl: "/",
+      });
     } catch (e) {
       console.error("error during sign in:", e);
       toast.error("error during sign in, please try again");
