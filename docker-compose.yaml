@@ -88,16 +88,17 @@ services:
       SYNDICAPI_HTTP: "http://syndicapi:${SYNDICAPI_PORT}"
       services__syndicapi__http__0: "http://syndicapi:${SYNDICAPI_PORT}"
       SYNDICAPI_HTTPS: "https://syndicapi:${SYNDICAPI_PORT}"
-      PORT: "8000"
+      PORT: "8080"
+      ORIGIN: "${ORIGIN}"
       AUTH_AUTHENTIK_ID: "${SYNDIC_FRONTEND_AUTHENTIK_CLIENT_ID}"
       AUTH_AUTHENTIK_CLIENT_SECRET: "${SYNDIC_FRONTEND_AUTHENTIK_CLIENT_SECRET}"
-      AUTH_AUTHENTIK_ISSUER: "${AUTHENTIK_ISSUER_URL}"
       AUTH_SECRET: "${AUTHJS_SECRET}"
+      AUTH_AUTHENTIK_ISSUER: "${AUTHENTIK_ISSUER_URL}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://syndic-dashboard:18889"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
       OTEL_SERVICE_NAME: "syndicfrontend"
     ports:
-      - "8080:8000"
+      - "8080:8080"
     depends_on:
       syndicapi:
         condition: "service_started"
