@@ -1,15 +1,15 @@
 import { SvelteKitAuth, type DefaultSession } from "@auth/sveltekit";
 import Authentik from "@auth/core/providers/authentik";
-import { AUTH_AUTHENTIK_CLIENT_SECRET, AUTH_AUTHENTIK_ID, AUTH_AUTHENTIK_ISSUER } from "$env/static/private";
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
   providers: [Authentik({
-    clientId: AUTH_AUTHENTIK_ID,
-    issuer: AUTH_AUTHENTIK_ISSUER,
-    clientSecret: AUTH_AUTHENTIK_CLIENT_SECRET,
-    authorization: { params: { scope: "openid email profile offline_access" } }
+    clientId: process.env.AUTH_AUTHENTIK_ID,
+    issuer: process.env.AUTH_AUTHENTIK_ISSUER,
+    clientSecret: process.env.AUTH_AUTHENTIK_CLIENT_SECRET,
+    authorization: { params: { scope: "openid email profile offline_access" } },
   })],
   trustHost: true,
+  secret: process.env.AUTH_SECRET,
   session: {
     strategy: "jwt",
   },
@@ -46,8 +46,8 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
           const response = await fetch(`https://auth.suneslilleserver.dk/application/o/token/`, {
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: new URLSearchParams({
-              client_id: AUTH_AUTHENTIK_ID,
-              client_secret: AUTH_AUTHENTIK_CLIENT_SECRET,
+              client_id: process.env.AUTH_AUTHENTIK_ID ?? '',
+              client_secret: process.env.AUTH_AUTHENTIK_CLIENT_SECRET ?? '',
               grant_type: "refresh_token",
               refresh_token: refresh_token,
             }),
