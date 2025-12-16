@@ -73,7 +73,7 @@ jobs:
       # Unfortunately, as per Aspire 13.0.1, it is not possible to set labels
       - name: Tag and push frontend image
         run: |
-          echo "FROM ${{steps.image.outputs.image}}" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
+          echo "FROM --platform linux/amd64,linux/arm64 ${{steps.image.outputs.image}}" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
           docker tag temp ghcr.io/sunese/syndic/frontend:${{ steps.version.outputs.version }}
           docker tag temp ghcr.io/sunese/syndic/frontend:latest
           docker push ghcr.io/sunese/syndic/frontend:${{ steps.version.outputs.version }}
@@ -81,7 +81,7 @@ jobs:
 
       - name: Tag and push api image
         run: |
-          echo "FROM syndicapi" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
+          echo "FROM --platform linux/amd64,linux/arm64 syndicapi" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
           docker tag temp ghcr.io/sunese/syndic/api:${{ steps.version.outputs.version }}
           docker tag temp ghcr.io/sunese/syndic/api:latest
           docker push ghcr.io/sunese/syndic/api:${{ steps.version.outputs.version }}
@@ -89,7 +89,7 @@ jobs:
 
       - name: Tag and push worker image
         run: |
-          echo "FROM syndicworker" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
+          echo "FROM --platform linux/amd64,linux/arm64 syndicworker" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
           docker tag temp ghcr.io/sunese/syndic/worker:${{ steps.version.outputs.version }}
           docker tag temp ghcr.io/sunese/syndic/worker:latest
           docker push ghcr.io/sunese/syndic/worker:${{ steps.version.outputs.version }}
