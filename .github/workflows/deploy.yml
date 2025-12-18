@@ -47,7 +47,7 @@ jobs:
       - name: Aspire build
         run: |
           tmpfile=$(mktemp)
-          aspire do build --non-interactive 2>&1 | tee "$tmpfile"
+          aspire do build --non-interactive --log-level debug 2>&1 | tee "$tmpfile"
           if ! grep -q "✓ PIPELINE SUCCEEDED" "$tmpfile"; then
             echo "Aspire deploy seemed to have failed, success message not found."
             exit 1
