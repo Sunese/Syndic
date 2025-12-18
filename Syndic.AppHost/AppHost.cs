@@ -1,9 +1,15 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using Aspire.Hosting.Publishing;
+using Aspire.Hosting.Pipelines;
+
+#pragma warning disable ASPIREPIPELINES003
+#pragma warning disable ASPIRECOMPUTE003
 
 var builder = DistributedApplication.CreateBuilder(args);
 
 builder.Services.AddHealthChecks();
+
+var containerRegistry = builder.AddContainerRegistry("ghcr-syndic", "ghcr.io", "sunese/syndic");
 
 builder.AddDockerComposeEnvironment("syndic")
   .WithDashboard(c =>
@@ -46,7 +52,14 @@ var readerDbManager = builder.AddProject<Projects.Syndic_ReaderDbManager>("syndi
   .PublishAsDockerComposeService((resource, service) =>
   {
     service.DependsOn["postgres"] = new() { Condition = "service_healthy" };
-  });
+  })
+  .WithContainerBuildOptions(opts =>
+  {
+    opts.TargetPlatform = ContainerTargetPlatform.AllLinux;
+  })
+  .WithContainerRegistry(containerRegistry)
+  .WithRemoteImageName("worker")
+  .WithRemoteImageTag("latest");
 
 var readerService = builder.AddProject<Projects.Syndic_ReaderService>("syndicapi")
   .WithReference(postgresReaderDb)
@@ -54,7 +67,14 @@ var readerService = builder.AddProject<Projects.Syndic_ReaderService>("syndicapi
   .WaitForCompletion(readerDbManager)
   .PublishAsDockerComposeService((resource, service) =>
   {
-  });
+  })
+  .WithContainerBuildOptions(opts =>
+  {
+    opts.TargetPlatform = ContainerTargetPlatform.AllLinux;
+  })
+  .WithContainerRegistry(containerRegistry)
+  .WithRemoteImageName("api")
+  .WithRemoteImageTag("latest");
 
 // It is not possible as of now to spin ud a "AddJavaScriptApp"
 // kind application as a container when deploying. 
@@ -85,7 +105,16 @@ else if (builder.ExecutionContext.IsPublishMode)
                             .WithEnvironment("AUTH_AUTHENTIK_ID", syndicAuthentikClientId)
                             .WithEnvironment("AUTH_AUTHENTIK_CLIENT_SECRET", syndicAuthentikClientSecert)
                             .WithEnvironment("AUTH_SECRET", authJsSecret)
-                            .WithEnvironment("AUTH_AUTHENTIK_ISSUER", authentikIssuerUrl);
+                            .WithEnvironment("AUTH_AUTHENTIK_ISSUER", authentikIssuerUrl)
+                            .WithContainerBuildOptions(opts =>
+                            {
+                              opts.TargetPlatform = ContainerTargetPlatform.AllLinux;
+                              opts.ImageFormat = ContainerImageFormat.Docker; // this ensures the image gets pushed to the local docker registry
+                            })
+                            .WithRemoteImageName("frontend")
+                            .WithRemoteImageTag("latest")
+                            .WithRemoteImageTag("test")
+                            .WithContainerRegistry(containerRegistry);
 }
 else
 {
