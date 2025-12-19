@@ -39,19 +39,16 @@ jobs:
       - name: Install Aspire CLI
         run: curl -sSL https://aspire.dev/install.sh | bash
 
-      # Note 1: Aspire will prompt for external parameters (secrets), hence we use `--non-interactive`
-      #         but we don't worry about the parameters for now, we are just trying things out :D
-      # Note 2: In Aspire 13.0, the statuscode will always be 0, even if one of the steps fail
-      #         for this reason, we have this very ugly hack that checks for the "✓ PIPELINE SUCCEEDED" line
-      #         Seems like this will be fixed in 13.1 though: https://github.com/dotnet/aspire/pull/12923
-      - name: Aspire build
-        run: |
-          tmpfile=$(mktemp)
-          aspire do build --non-interactive --log-level debug 2>&1 | tee "$tmpfile"
-          if ! grep -q "✓ PIPELINE SUCCEEDED" "$tmpfile"; then
-            echo "Aspire deploy seemed to have failed, success message not found."
-            exit 1
-          fi
+      - name: Set up Docker
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
 
       - name: Get next version
         uses: reecetech/version-increment@2024.10.1
@@ -63,34 +60,18 @@ jobs:
       - run: git tag ${{ steps.version.outputs.version }}
       - run: git push origin ${{ steps.version.outputs.version }}
 
-      - name: Find generated frontend image
-        id: image
+      # `aspire do push` will build images tagged name:latest and push them
+      - name: Aspire push
         run: |
-          IMAGE=$(docker images syndicfrontend --format "{{.Repository}}:{{.Tag}}" | head -n 1)
-          echo "image=$IMAGE" >> $GITHUB_OUTPUT
+          aspire do push --log-level debug
 
-      # First we re-build the image with label pointing back to the repo
-      # Unfortunately, as per Aspire 13.0.1, it is not possible to set labels
-      - name: Tag and push frontend image
+      - name: Tag and push versioned images
         run: |
-          echo "FROM --platform linux/amd64,linux/arm64 ${{steps.image.outputs.image}}" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
-          docker tag temp ghcr.io/sunese/syndic/frontend:${{ steps.version.outputs.version }}
-          docker tag temp ghcr.io/sunese/syndic/frontend:latest
+          docker tag ghcr.io/sunese/syndic/frontend:latest ghcr.io/sunese/syndic/frontend:${{ steps.version.outputs.version }}
           docker push ghcr.io/sunese/syndic/frontend:${{ steps.version.outputs.version }}
-          docker push ghcr.io/sunese/syndic/frontend:latest
 
-      - name: Tag and push api image
-        run: |
-          echo "FROM --platform linux/amd64,linux/arm64 syndicapi" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
-          docker tag temp ghcr.io/sunese/syndic/api:${{ steps.version.outputs.version }}
-          docker tag temp ghcr.io/sunese/syndic/api:latest
+          docker tag ghcr.io/sunese/syndic/api:latest ghcr.io/sunese/syndic/api:${{ steps.version.outputs.version }}
           docker push ghcr.io/sunese/syndic/api:${{ steps.version.outputs.version }}
-          docker push ghcr.io/sunese/syndic/api:latest
 
-      - name: Tag and push worker image
-        run: |
-          echo "FROM --platform linux/amd64,linux/arm64 syndicworker" | docker build -t temp --label org.opencontainers.image.source="https://github.com/sunese/syndic" -
-          docker tag temp ghcr.io/sunese/syndic/worker:${{ steps.version.outputs.version }}
-          docker tag temp ghcr.io/sunese/syndic/worker:latest
+          docker tag ghcr.io/sunese/syndic/worker:latest ghcr.io/sunese/syndic/worker:${{ steps.version.outputs.version }}
           docker push ghcr.io/sunese/syndic/worker:${{ steps.version.outputs.version }}
-          docker push ghcr.io/sunese/syndic/worker:latest
