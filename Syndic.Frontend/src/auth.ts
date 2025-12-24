@@ -2,6 +2,7 @@ import { SvelteKitAuth, type DefaultSession } from "@auth/sveltekit";
 import Authentik from "@auth/core/providers/authentik";
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
+  debug: true, // This will use the console methods to log out many details about the authentication process, including requests, responses, errors, and database requests and responses.
   providers: [Authentik({
     clientId: process.env.AUTH_AUTHENTIK_ID,
     issuer: process.env.AUTH_AUTHENTIK_ISSUER,
