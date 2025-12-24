@@ -98,7 +98,7 @@ services:
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
       OTEL_SERVICE_NAME: "syndicfrontend"
     ports:
-      - "8080:8080"
+      - "8081:8080"
     depends_on:
       syndicapi:
         condition: "service_started"
