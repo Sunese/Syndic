@@ -17,11 +17,13 @@ builder.AddDockerComposeEnvironment("syndic")
     c.WithHostPort(8888);
     c.WithExternalHttpEndpoints();
   });
-
 var syndicAuthentikClientId = builder.AddParameter("Syndic-Frontend-Authentik-Client-ID", secret: true);
 var syndicAuthentikClientSecert = builder.AddParameter("Syndic-Frontend-Authentik-Client-Secret", secret: true);
 var authentikIssuerUrl = builder.AddParameter("Authentik-Issuer-Url");
 var authJsSecret = builder.AddParameter("AuthJS-Secret", secret: true);
+// NOTE: this (in combination with the usage) is a hack to make Aspire
+// generate a "DNS_SERVER" entry in the .env file
+var dnsServer = builder.AddParameter("DNS-Server", "127.0.0.11", publishValueAsDefault: true);
 
 var postgresServer = builder.AddPostgres("postgres")
   .WithPgWeb(x => x.WithHostPort(5555))
@@ -101,12 +103,18 @@ else if (builder.ExecutionContext.IsPublishMode)
                             .WithBuildScript("build")
                             .WithHttpEndpoint(8080, 8080, env: "PORT")
                             .WithExternalHttpEndpoints()
-                            .PublishAsDockerComposeService((res, ser) => { })
+                            .PublishAsDockerComposeService((res, ser) =>
+                            {
+                              ser.Dns = [@"${DNS_SERVER}"];
+                            })
                             .PublishAsDockerFile(c => { c.WithImageTag("latest"); })
                             .WithEnvironment("AUTH_AUTHENTIK_ID", syndicAuthentikClientId)
                             .WithEnvironment("AUTH_AUTHENTIK_CLIENT_SECRET", syndicAuthentikClientSecert)
                             .WithEnvironment("AUTH_SECRET", authJsSecret)
                             .WithEnvironment("AUTH_AUTHENTIK_ISSUER", authentikIssuerUrl)
+                            // NOTE: this (in combination with the parameter) is a hack to make Aspire '
+                            // generate a "DNS_SERVER" entry in the .env file 
+                            .WithEnvironment("DNS_SERVER", dnsServer)
                             .WithContainerBuildOptions(opts =>
                             {
                               opts.TargetPlatform = ContainerTargetPlatform.AllLinux;
