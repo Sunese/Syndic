@@ -35,5 +35,5 @@ Thumbs.db
 .toolstarget
 *.swp
 
-*.env*
+.env
 !.env.example
