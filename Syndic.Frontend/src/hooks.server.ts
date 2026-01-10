@@ -3,33 +3,39 @@ import { handle as authJSHandle, signOut } from "./auth"
 import { getRequestEvent } from "$app/server";
 import { getToken } from "@auth/core/jwt";
 import { error, type ServerInit } from "@sveltejs/kit";
+import { sequence } from "@sveltejs/kit/hooks";
+import { mintInternalJwt } from "$lib/server/jwt";
+import { jwtVerify } from "jose";
 
-export const handle = async ({ event, resolve }) => {
+const redirectIfNotAuthenticated = async ({ event, resolve }: any) => {
+  // Protect all routes other than /signin
+  if (!event.url.pathname.startsWith('/signin')) {
+    const session = await event.locals.auth();
+    if (!session) {
+      console.log("No session found, redirecting to /signin");
+      return Response.redirect(new URL('/signin', event.url), 303);
+    }
+  }
+  return resolve(event);
+}
+
+const authHandle = async ({ event, resolve }: any) => {
   return authJSHandle({
     event,
     resolve
   })
 }
 
+export const handle = sequence(authHandle, redirectIfNotAuthenticated);
+
 export const init: ServerInit = async () => {
-  console.log(`SYNDICAPI_HTTP=${process.env.SYNDICAPI_HTTP}`)
-  console.log(`AUTH_SECRET=${process.env.AUTH_SECRET}`)
-  console.log(`AUTH_URL=${process.env.AUTH_URL}`)
-  console.log(`AUTH_AUTHENTIK_ID=${process.env.AUTH_AUTHENTIK_ID}`)
-  console.log(`AUTH_AUTHENTIK_CLIENT_SECRET=${process.env.AUTH_AUTHENTIK_CLIENT_SECRET}`)
 
   client.setConfig({
     baseUrl: process.env.SYNDICAPI_HTTP,
   });
 
   client.interceptors.request.use(async (request, options) => {
-    console.log('hello from interceptor')
     const requestEvent = getRequestEvent();
-    // We are calling auth() solely to trigger JWT callback, that refreshes the token if needed
-    // This is kind of a waste and would be nice of the getToken() method also could trigger
-    // the callback
-    // requestEvent.locals.auth();
-    // UPDATE: I think this gives race condition issues with setting cookies..
     const tokens = await getToken({
       req: requestEvent.request,
       secureCookie: true,
@@ -39,9 +45,26 @@ export const init: ServerInit = async () => {
       raw: false
     })
 
-    const accessToken = tokens?.access_token as string;
-    if (!accessToken) throw new Error("No access token found in JWT");
-    request.headers.set('Authorization', `Bearer ${accessToken}`);
+    console.log("Tokens in request interceptor:", tokens);
+    const name = tokens?.name as string;
+    const email = tokens?.email as string;
+    const provider = tokens?.provider as string;
+
+    if (!name || !email || !provider) {
+      throw error(401, "Missing required token fields");
+    }
+
+    const user = {
+      name,
+      email,
+      provider
+    }
+
+    const internalJwt = await mintInternalJwt(user);
+
+    request.headers.set('Authorization', `Bearer ${internalJwt}`);
+
+    console.log("Sent request: ", request);
     return request;
   });
 
