@@ -6,6 +6,7 @@ using Syndic.ReaderService;
 using Syndic.ReaderService.Middleware;
 using Syndic.ReaderDb;
 using Syndic.ReaderService.Rss;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,18 +22,37 @@ builder.AddNpgsqlDbContext<ReaderDbContext>("syndicdb");
 
 builder.Services.AddSingleton<RssParser>();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+var internalJwtSecret = Environment.GetEnvironmentVariable("INTERNAL_JWT_SECRET");
+if (string.IsNullOrEmpty(internalJwtSecret))
+{
+  throw new InvalidOperationException("INTERNAL_JWT_SECRET environment variable is not set");
+}
+
+var key = new SymmetricSecurityKey(
+    Encoding.UTF8.GetBytes(internalJwtSecret)
+);
+key.KeyId = "internal-auth";
+
+Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-      options.Authority = "https://auth.suneslilleserver.dk/application/o/rss-reader-test/";
-      options.RequireHttpsMetadata = true;
       options.TokenValidationParameters = new TokenValidationParameters
       {
         ValidateIssuer = true,
-        ValidateAudience = false, // dont need to for now. but maybe consider it.
+        ValidIssuer = "internal-auth",
+
+        ValidateAudience = true,
+        ValidAudience = "aspnet-api",
+
         ValidateLifetime = true,
+
         ValidateIssuerSigningKey = true,
-        RoleClaimType = "groups" // groups in authentik == roles as I have set it up for now
+        IssuerSigningKey = key,
+
+        ClockSkew = TimeSpan.FromSeconds(30)
       };
       options.SaveToken = true;
       options.Events = new JwtBearerEvents()
@@ -43,27 +63,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
           var authHeader = c.Request.Headers.Authorization.Single();
           logger.LogInformation("Validated token from Authorization header: {AuthorizationHeader}", authHeader);
           return Task.CompletedTask;
+        },
+        OnAuthenticationFailed = c =>
+        {
+          var logger = c.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JWT Auth");
+          var authHeader = c.Request.Headers.Authorization.Single();
+          logger.LogWarning("Authentication failed: {AuthorizationHeader} {ExceptionMessage}", authHeader, c.Exception.Message);
+          return Task.CompletedTask;
+        },
+        OnForbidden = c =>
+        {
+          var logger = c.HttpContext.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("JWT Auth");
+          var authHeader = c.Request.Headers.Authorization.Single();
+          logger.LogWarning("Forbidden request: {AuthorizationHeader}", authHeader);
+          return Task.CompletedTask;
         }
       };
     });
 
-builder.Services.AddAuthorization(x =>
-{
-  x.AddPolicy("MustBeReader", policy =>
-  {
-    policy.RequireAuthenticatedUser();
-    policy.RequireRole("rss_users");
-  });
-
-  x.AddPolicy("MustBeAdmin", policy =>
-  {
-    policy.RequireAuthenticatedUser();
-    policy.RequireRole("rss_admins");
-  });
-
-  x.DefaultPolicy = x.GetPolicy("MustBeReader") ?? throw new InvalidOperationException("Default policy 'MustBeReaderUser' not found");
-  x.FallbackPolicy = x.DefaultPolicy;
-});
+builder.Services.AddAuthorization();
 
 // Web/Presentation
 builder.AddOpenApi();
@@ -72,6 +90,7 @@ var app = builder.Build();
 
 app.MapFeedEndpoints();
 app.MapSubscriptionsEndpoints();
+app.MapDefaultEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
@@ -89,7 +108,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseUserMiddleware();
-
-app.MapDefaultEndpoints();
 
 app.Run();

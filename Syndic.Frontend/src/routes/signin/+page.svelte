@@ -1,5 +1,4 @@
 <script lang="ts">
-  import GalleryVerticalEndIcon from "@lucide/svelte/icons/gallery-vertical-end";
   import LoginForm from "$lib/components/login-form.svelte";
 </script>
 

@@ -17,13 +17,12 @@ builder.AddDockerComposeEnvironment("syndic")
     c.WithHostPort(8888);
     c.WithExternalHttpEndpoints();
   });
-var syndicAuthentikClientId = builder.AddParameter("Syndic-Frontend-Authentik-Client-ID", secret: true);
-var syndicAuthentikClientSecert = builder.AddParameter("Syndic-Frontend-Authentik-Client-Secret", secret: true);
-var authentikIssuerUrl = builder.AddParameter("Authentik-Issuer-Url");
-var authJsSecret = builder.AddParameter("AuthJS-Secret", secret: true);
-// NOTE: this (in combination with the usage) is a hack to make Aspire
-// generate a "DNS_SERVER" entry in the .env file
-var dnsServer = builder.AddParameter("DNS-Server", "127.0.0.11", publishValueAsDefault: true);
+var paramAuthGoogleId = builder.AddParameter("AUTH-GOOGLE-ID", secret: true);
+var paramAuthGoogleSecret = builder.AddParameter("AUTH-GOOGLE-SECRET", secret: true);
+var paramAuthGithubId = builder.AddParameter("AUTH-GITHUB-ID", secret: true);
+var paramAuthGithubSecret = builder.AddParameter("AUTH-GITHUB-SECRET", secret: true);
+var paramAuthJsSecret = builder.AddParameter("AUTHJS-SECRET", secret: true);
+var paramInternalJwtSecret = builder.AddParameter("INTERNAL-JWT-SECRET", secret: true);
 
 var postgresServer = builder.AddPostgres("postgres")
   .WithPgWeb(x => x.WithHostPort(5555))
@@ -67,6 +66,7 @@ var readerService = builder.AddProject<Projects.Syndic_ReaderService>("syndicapi
   .WithReference(postgresReaderDb)
   .WaitFor(postgresReaderDb)
   .WaitForCompletion(readerDbManager)
+  .WithEnvironment("INTERNAL_JWT_SECRET", paramInternalJwtSecret)
   .PublishAsDockerComposeService((resource, service) =>
   {
   })
@@ -90,10 +90,12 @@ if (builder.ExecutionContext.IsRunMode)
                   .WithUrl("http://localhost:5173")
                   .WaitFor(readerService)
                   .WithReference(readerService)
-                  .WithEnvironment("AUTH_AUTHENTIK_ID", syndicAuthentikClientId)
-                  .WithEnvironment("AUTH_AUTHENTIK_CLIENT_SECRET", syndicAuthentikClientSecert)
-                  .WithEnvironment("AUTH_SECRET", authJsSecret)
-                  .WithEnvironment("AUTH_AUTHENTIK_ISSUER", authentikIssuerUrl);
+                  .WithEnvironment("AUTH_GOOGLE_ID", paramAuthGoogleId)
+                  .WithEnvironment("AUTH_GOOGLE_SECRET", paramAuthGoogleSecret)
+                  .WithEnvironment("AUTH_GITHUB_ID", paramAuthGithubId)
+                  .WithEnvironment("AUTH_GITHUB_SECRET", paramAuthGithubSecret)
+                  .WithEnvironment("AUTH_SECRET", paramAuthJsSecret)
+                  .WithEnvironment("INTERNAL_JWT_SECRET", paramInternalJwtSecret);
 }
 else if (builder.ExecutionContext.IsPublishMode)
 {
@@ -105,16 +107,14 @@ else if (builder.ExecutionContext.IsPublishMode)
                             .WithExternalHttpEndpoints()
                             .PublishAsDockerComposeService((res, ser) =>
                             {
-                              ser.Dns = [@"${DNS_SERVER}"];
                             })
                             .PublishAsDockerFile(c => { c.WithImageTag("latest"); })
-                            .WithEnvironment("AUTH_AUTHENTIK_ID", syndicAuthentikClientId)
-                            .WithEnvironment("AUTH_AUTHENTIK_CLIENT_SECRET", syndicAuthentikClientSecert)
-                            .WithEnvironment("AUTH_SECRET", authJsSecret)
-                            .WithEnvironment("AUTH_AUTHENTIK_ISSUER", authentikIssuerUrl)
-                            // NOTE: this (in combination with the parameter) is a hack to make Aspire '
-                            // generate a "DNS_SERVER" entry in the .env file 
-                            .WithEnvironment("DNS_SERVER", dnsServer)
+                            .WithEnvironment("AUTH_GOOGLE_ID", paramAuthGoogleId)
+                            .WithEnvironment("AUTH_GOOGLE_SECRET", paramAuthGoogleSecret)
+                            .WithEnvironment("AUTH_GITHUB_ID", paramAuthGithubId)
+                            .WithEnvironment("AUTH_GITHUB_SECRET", paramAuthGithubSecret)
+                            .WithEnvironment("AUTH_SECRET", paramAuthJsSecret)
+                            .WithEnvironment("INTERNAL_JWT_SECRET", paramInternalJwtSecret)
                             .WithContainerBuildOptions(opts =>
                             {
                               opts.TargetPlatform = ContainerTargetPlatform.AllLinux;

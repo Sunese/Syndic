@@ -22,22 +22,33 @@ public class UserMiddleware
       //       we should check wether we signed in with that or via an external provider
       //      (because if via identity, the user should already exist in our system)
 
-      var userEmail = context.User.FindFirst(Constants.EmailClaim)?.Value;
+      var userEmail = context.User.FindFirst(Constants.SubClaim)?.Value;
 
       if (userEmail is null)
       {
-        logger.LogWarning("Authenticated user has no email claim, cannot proceed");
+        logger.LogWarning("Authenticated user has no sub claim (expected email), cannot proceed");
         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
         await context.Response.WriteAsync("Unauthorized: Email claim is missing");
         return;
       }
 
+      // TODO: do we allow 2 users with same email from different providers?
+      // If yes: we need to fix this
+      // If no: then what if the user is signing in here with a different provider than before, but with the same email?
       var user = await db.Users
         .FirstOrDefaultAsync(u => u.Email == userEmail);
       if (user is null)
       {
+        var provider = context.User.FindFirst(Constants.ProviderClaim)?.Value;
+        if (provider is null)
+        {
+          logger.LogWarning("Authenticated user has no provider claim, cannot create user");
+          context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+          await context.Response.WriteAsync("Unauthorized: Provider claim is missing");
+          return;
+        }
         // NOTE: if we add support for other OIDC providers, we should set this properly
-        user = new ReaderDb.Entities.User(userEmail, Constants.AuthentikOidcSub);
+        user = new ReaderDb.Entities.User(userEmail, provider);
         db.Users.Add(user);
         await db.SaveChangesAsync();
         logger.LogInformation("Created new user {UserEmail} with ID {UserId}", userEmail, user.Id);
