@@ -2,7 +2,7 @@ import { client } from "./client/client.gen"
 import { handle as authJSHandle, signOut } from "./auth"
 import { getRequestEvent } from "$app/server";
 import { getToken } from "@auth/core/jwt";
-import { error, type ServerInit } from "@sveltejs/kit";
+import { error, redirect, type ServerInit } from "@sveltejs/kit";
 import { sequence } from "@sveltejs/kit/hooks";
 import { mintInternalJwt } from "$lib/server/jwt";
 import { jwtVerify } from "jose";
@@ -13,7 +13,7 @@ const redirectIfNotAuthenticated = async ({ event, resolve }: any) => {
     const session = await event.locals.auth();
     if (!session) {
       console.log("No session found, redirecting to /signin");
-      return Response.redirect(new URL('/signin', event.url), 303);
+      redirect(303, `/signin`);
     }
   }
   return resolve(event);

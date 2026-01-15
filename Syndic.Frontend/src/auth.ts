@@ -1,8 +1,6 @@
 import { SvelteKitAuth, type DefaultSession } from "@auth/sveltekit";
-import Authentik from "@auth/core/providers/authentik";
 import GitHub from "@auth/core/providers/github";
 import Google from "@auth/core/providers/google";
-import Apple from "@auth/core/providers/apple";
 
 export const { handle, signIn, signOut } = SvelteKitAuth({
   providers: [
@@ -36,10 +34,3 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
     },
   }
 })
-
-// http%3A%2F%2Flocalhost%3A5173%2Fauth%2Fcallback%2Fgithub
-// 
-
-
-
-

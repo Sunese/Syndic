@@ -21,7 +21,7 @@ var paramAuthGoogleId = builder.AddParameter("AUTH-GOOGLE-ID", secret: true);
 var paramAuthGoogleSecret = builder.AddParameter("AUTH-GOOGLE-SECRET", secret: true);
 var paramAuthGithubId = builder.AddParameter("AUTH-GITHUB-ID", secret: true);
 var paramAuthGithubSecret = builder.AddParameter("AUTH-GITHUB-SECRET", secret: true);
-var paramAuthJsSecret = builder.AddParameter("AUTHJS-SECRET", secret: true);
+var paramAuthJsSecret = builder.AddParameter("AUTH-SECRET", secret: true);
 var paramInternalJwtSecret = builder.AddParameter("INTERNAL-JWT-SECRET", secret: true);
 
 var postgresServer = builder.AddPostgres("postgres")
