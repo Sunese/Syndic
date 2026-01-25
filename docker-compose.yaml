@@ -97,6 +97,7 @@ services:
       AUTH_GITHUB_SECRET: "${AUTH_GITHUB_SECRET}"
       AUTH_SECRET: "${AUTH_SECRET}"
       INTERNAL_JWT_SECRET: "${INTERNAL_JWT_SECRET}"
+      ORIGIN: "${ORIGIN}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "http://syndic-dashboard:18889"
       OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
       OTEL_SERVICE_NAME: "syndicfrontend"

@@ -25,6 +25,7 @@ var paramAuthGithubId = builder.AddParameter("AUTH-GITHUB-ID", true);
 var paramAuthGithubSecret = builder.AddParameter("AUTH-GITHUB-SECRET", true);
 var paramAuthJsSecret = builder.AddParameter("AUTH-SECRET", true);
 var paramInternalJwtSecret = builder.AddParameter("INTERNAL-JWT-SECRET", true);
+var paramOrigin = builder.AddParameter("ORIGIN", false);
 
 var postgresServer = builder.AddPostgres("postgres")
   .WithPgWeb(x => x.WithHostPort(5555))
@@ -97,7 +98,8 @@ if (builder.ExecutionContext.IsRunMode)
     .WithEnvironment("AUTH_GITHUB_ID", paramAuthGithubId)
     .WithEnvironment("AUTH_GITHUB_SECRET", paramAuthGithubSecret)
     .WithEnvironment("AUTH_SECRET", paramAuthJsSecret)
-    .WithEnvironment("INTERNAL_JWT_SECRET", paramInternalJwtSecret);
+    .WithEnvironment("INTERNAL_JWT_SECRET", paramInternalJwtSecret)
+    .WithEnvironment("ORIGIN", paramOrigin);
 }
 else if (builder.ExecutionContext.IsPublishMode)
 {
@@ -117,6 +119,7 @@ else if (builder.ExecutionContext.IsPublishMode)
     .WithEnvironment("AUTH_GITHUB_SECRET", paramAuthGithubSecret)
     .WithEnvironment("AUTH_SECRET", paramAuthJsSecret)
     .WithEnvironment("INTERNAL_JWT_SECRET", paramInternalJwtSecret)
+    .WithEnvironment("ORIGIN", paramOrigin)
     .WithContainerBuildOptions(opts =>
     {
       opts.TargetPlatform = ContainerTargetPlatform.AllLinux;
