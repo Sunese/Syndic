@@ -28,13 +28,42 @@ public class ChannelDto
   public IEnumerable<ItemDto> Items { get; } = [];
   public Uri? ImageUrl { get; }
 
-  public ChannelDto(SyndicationFeed feed, Uri? imageUrl)
+  private ChannelDto(string title, Uri link, string description, DateTimeOffset? published, IEnumerable<ItemDto> items, Uri? imageUrl)
   {
-    Title = feed.Title.Text;
-    Link = feed.Links.FirstOrDefault()?.Uri ?? throw new InvalidOperationException("Feed has no link.");
-    Description = feed.Description?.Text ?? string.Empty;
-    Published = feed.LastUpdatedTime != DateTimeOffset.MinValue ? feed.LastUpdatedTime : null;
+    Title = title;
+    Link = link;
+    Description = description;
+    Published = published;
+    Items = items;
     ImageUrl = imageUrl;
-    Items = feed.Items.Select(item => new ItemDto(item));
+  }
+
+  public static bool TryCreate(SyndicationFeed feed, out string? warning, out string? error, out ChannelDto? channelDto)
+  {
+    var title = feed.Title.Text;
+    var link = feed.Links.FirstOrDefault()?.Uri ?? throw new InvalidOperationException("Feed has no link.");
+    var description = feed.Description?.Text ?? string.Empty;
+    DateTimeOffset? published = feed.LastUpdatedTime != DateTimeOffset.MinValue ? feed.LastUpdatedTime : null;
+    Uri? imageUrl = feed.ImageUrl != null && Uri.IsWellFormedUriString(feed.ImageUrl.ToString(), UriKind.Absolute) ? feed.ImageUrl : null;
+    // allocate list for items
+    var items = new List<ItemDto>(feed.Items.Count());
+
+    foreach (var item in feed.Items)
+    {
+      if (!ItemDto.TryCreate(item, out var itemWarning, out var itemError, out ItemDto? itemDto))
+      {
+        channelDto = null;
+        warning = itemWarning;
+        error = itemError;
+        return false;
+      }
+
+      items.Add(itemDto!); // "trust me bro", itemDto should never be null here
+    }
+
+    warning = null;
+    error = null;
+    channelDto = new ChannelDto(title, link, description, published, items, imageUrl);
+    return true;
   }
 }

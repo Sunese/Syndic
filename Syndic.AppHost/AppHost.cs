@@ -1,6 +1,8 @@
-using Microsoft.Extensions.DependencyInjection;
+using Aspire.Hosting.Docker.Resources.ComposeNodes;
+using Aspire.Hosting.Docker.Resources.ServiceNodes;
 using Aspire.Hosting.Publishing;
-using Aspire.Hosting.Pipelines;
+using Microsoft.Extensions.DependencyInjection;
+using Projects;
 
 #pragma warning disable ASPIREPIPELINES003
 #pragma warning disable ASPIRECOMPUTE003
@@ -17,12 +19,12 @@ builder.AddDockerComposeEnvironment("syndic")
     c.WithHostPort(8888);
     c.WithExternalHttpEndpoints();
   });
-var paramAuthGoogleId = builder.AddParameter("AUTH-GOOGLE-ID", secret: true);
-var paramAuthGoogleSecret = builder.AddParameter("AUTH-GOOGLE-SECRET", secret: true);
-var paramAuthGithubId = builder.AddParameter("AUTH-GITHUB-ID", secret: true);
-var paramAuthGithubSecret = builder.AddParameter("AUTH-GITHUB-SECRET", secret: true);
-var paramAuthJsSecret = builder.AddParameter("AUTH-SECRET", secret: true);
-var paramInternalJwtSecret = builder.AddParameter("INTERNAL-JWT-SECRET", secret: true);
+var paramAuthGoogleId = builder.AddParameter("AUTH-GOOGLE-ID", true);
+var paramAuthGoogleSecret = builder.AddParameter("AUTH-GOOGLE-SECRET", true);
+var paramAuthGithubId = builder.AddParameter("AUTH-GITHUB-ID", true);
+var paramAuthGithubSecret = builder.AddParameter("AUTH-GITHUB-SECRET", true);
+var paramAuthJsSecret = builder.AddParameter("AUTH-SECRET", true);
+var paramInternalJwtSecret = builder.AddParameter("INTERNAL-JWT-SECRET", true);
 
 var postgresServer = builder.AddPostgres("postgres")
   .WithPgWeb(x => x.WithHostPort(5555))
@@ -32,7 +34,7 @@ var postgresServer = builder.AddPostgres("postgres")
   // however it works as expected when running locally
   .PublishAsDockerComposeService((res, service) =>
   {
-    service.Healthcheck = new()
+    service.Healthcheck = new Healthcheck
     {
       Test = ["CMD-SHELL", "pg_isready -U postgres -d reader"],
       Interval = "10s",
@@ -44,7 +46,7 @@ var postgresServer = builder.AddPostgres("postgres")
 
 var postgresReaderDb = postgresServer.AddDatabase("syndicdb", "reader");
 
-var readerDbManager = builder.AddProject<Projects.Syndic_ReaderDbManager>("syndicworker")
+var readerDbManager = builder.AddProject<Syndic_ReaderDbManager>("syndicworker")
   .WithReference(postgresReaderDb)
   .WaitFor(postgresServer)
   .WaitFor(postgresReaderDb, WaitBehavior.WaitOnResourceUnavailable)
@@ -52,7 +54,7 @@ var readerDbManager = builder.AddProject<Projects.Syndic_ReaderDbManager>("syndi
   // so we overwrite it here
   .PublishAsDockerComposeService((resource, service) =>
   {
-    service.DependsOn["postgres"] = new() { Condition = "service_healthy" };
+    service.DependsOn["postgres"] = new ServiceDependency { Condition = "service_healthy" };
   })
   .WithContainerBuildOptions(opts =>
   {
@@ -62,7 +64,7 @@ var readerDbManager = builder.AddProject<Projects.Syndic_ReaderDbManager>("syndi
   .WithRemoteImageName("worker")
   .WithRemoteImageTag("latest");
 
-var readerService = builder.AddProject<Projects.Syndic_ReaderService>("syndicapi")
+var readerService = builder.AddProject<Syndic_ReaderService>("syndicapi")
   .WithReference(postgresReaderDb)
   .WaitFor(postgresReaderDb)
   .WaitForCompletion(readerDbManager)
@@ -87,46 +89,47 @@ var readerService = builder.AddProject<Projects.Syndic_ReaderService>("syndicapi
 if (builder.ExecutionContext.IsRunMode)
 {
   var frontend = builder.AddJavaScriptApp("syndicfrontend", "../Syndic.Frontend")
-                  .WithUrl("http://localhost:5173")
-                  .WaitFor(readerService)
-                  .WithReference(readerService)
-                  .WithEnvironment("AUTH_GOOGLE_ID", paramAuthGoogleId)
-                  .WithEnvironment("AUTH_GOOGLE_SECRET", paramAuthGoogleSecret)
-                  .WithEnvironment("AUTH_GITHUB_ID", paramAuthGithubId)
-                  .WithEnvironment("AUTH_GITHUB_SECRET", paramAuthGithubSecret)
-                  .WithEnvironment("AUTH_SECRET", paramAuthJsSecret)
-                  .WithEnvironment("INTERNAL_JWT_SECRET", paramInternalJwtSecret);
+    .WithUrl("http://localhost:5173")
+    .WaitFor(readerService)
+    .WithReference(readerService)
+    .WithEnvironment("AUTH_GOOGLE_ID", paramAuthGoogleId)
+    .WithEnvironment("AUTH_GOOGLE_SECRET", paramAuthGoogleSecret)
+    .WithEnvironment("AUTH_GITHUB_ID", paramAuthGithubId)
+    .WithEnvironment("AUTH_GITHUB_SECRET", paramAuthGithubSecret)
+    .WithEnvironment("AUTH_SECRET", paramAuthJsSecret)
+    .WithEnvironment("INTERNAL_JWT_SECRET", paramInternalJwtSecret);
 }
 else if (builder.ExecutionContext.IsPublishMode)
 {
   var frontend = builder.AddNodeApp("syndicfrontend", "../Syndic.Frontend", "build")
-                            .WaitFor(readerService)
-                            .WithReference(readerService)
-                            .WithBuildScript("build")
-                            .WithHttpEndpoint(8080, 8080, env: "PORT")
-                            .WithExternalHttpEndpoints()
-                            .PublishAsDockerComposeService((res, ser) =>
-                            {
-                            })
-                            .PublishAsDockerFile(c => { c.WithImageTag("latest"); })
-                            .WithEnvironment("AUTH_GOOGLE_ID", paramAuthGoogleId)
-                            .WithEnvironment("AUTH_GOOGLE_SECRET", paramAuthGoogleSecret)
-                            .WithEnvironment("AUTH_GITHUB_ID", paramAuthGithubId)
-                            .WithEnvironment("AUTH_GITHUB_SECRET", paramAuthGithubSecret)
-                            .WithEnvironment("AUTH_SECRET", paramAuthJsSecret)
-                            .WithEnvironment("INTERNAL_JWT_SECRET", paramInternalJwtSecret)
-                            .WithContainerBuildOptions(opts =>
-                            {
-                              opts.TargetPlatform = ContainerTargetPlatform.AllLinux;
-                              opts.ImageFormat = ContainerImageFormat.Docker;
-                            })
-                            .WithRemoteImageName("frontend")
-                            .WithRemoteImageTag("latest")
-                            .WithContainerRegistry(containerRegistry);
+    .WaitFor(readerService)
+    .WithReference(readerService)
+    .WithBuildScript("build")
+    .WithHttpEndpoint(8080, 8080, env: "PORT")
+    .WithExternalHttpEndpoints()
+    .PublishAsDockerComposeService((res, ser) =>
+    {
+    })
+    .PublishAsDockerFile(c => { c.WithImageTag("latest"); })
+    .WithEnvironment("AUTH_GOOGLE_ID", paramAuthGoogleId)
+    .WithEnvironment("AUTH_GOOGLE_SECRET", paramAuthGoogleSecret)
+    .WithEnvironment("AUTH_GITHUB_ID", paramAuthGithubId)
+    .WithEnvironment("AUTH_GITHUB_SECRET", paramAuthGithubSecret)
+    .WithEnvironment("AUTH_SECRET", paramAuthJsSecret)
+    .WithEnvironment("INTERNAL_JWT_SECRET", paramInternalJwtSecret)
+    .WithContainerBuildOptions(opts =>
+    {
+      opts.TargetPlatform = ContainerTargetPlatform.AllLinux;
+      opts.ImageFormat = ContainerImageFormat.Docker;
+    })
+    .WithRemoteImageName("frontend")
+    .WithRemoteImageTag("latest")
+    .WithContainerRegistry(containerRegistry);
 }
 else
 {
-  throw new Exception("Soo uhm ExecutionContext was neither RunMode or PublishMode. I dont know what frontend to create");
+  throw new Exception(
+    "Soo uhm ExecutionContext was neither RunMode or PublishMode. I dont know what frontend to create");
 }
 
 builder

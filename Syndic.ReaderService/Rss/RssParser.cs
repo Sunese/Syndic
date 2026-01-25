@@ -27,7 +27,17 @@ public class RssParser
         throw new InvalidOperationException("Failed to parse RSS feed.");
       }
 
-      return FetchChannelResult.CreateSuccess(new ChannelDto(feed, await GetImageUrl(uri, feed)), subscription);
+      if (!ChannelDto.TryCreate(feed, out var warning, out var error, out var channelDto))
+      {
+        throw new InvalidOperationException($"Failed to create ChannelDto: {error}");
+      }
+
+      if (warning is not null)
+      {
+        logger.LogDebug("Warning while creating ChannelDto: {Warning}", warning);
+      }
+
+      return FetchChannelResult.CreateSuccess(channelDto!, subscription);
     }
     catch (Exception ex)
     {

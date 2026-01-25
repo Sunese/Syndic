@@ -23,26 +23,17 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
  *
  * For each subscription, the latest items are fetched from the respective RSS feed.
  */
-export const getFeed = <ThrowOnError extends boolean = false>(options?: Options<GetFeedData, ThrowOnError>) => (options?.client ?? client).get<GetFeedResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/feed',
-    ...options
-});
+export const getFeed = <ThrowOnError extends boolean = false>(options?: Options<GetFeedData, ThrowOnError>) => (options?.client ?? client).get<GetFeedResponses, unknown, ThrowOnError>({ url: '/api/feed', ...options });
 
 /**
  * Get all subscriptions for the current user
  */
-export const getSubscriptions = <ThrowOnError extends boolean = false>(options?: Options<GetSubscriptionsData, ThrowOnError>) => (options?.client ?? client).get<GetSubscriptionsResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/subscriptions',
-    ...options
-});
+export const getSubscriptions = <ThrowOnError extends boolean = false>(options?: Options<GetSubscriptionsData, ThrowOnError>) => (options?.client ?? client).get<GetSubscriptionsResponses, unknown, ThrowOnError>({ url: '/api/subscriptions', ...options });
 
 /**
  * Create a new subscription for the current user
  */
 export const createSubscription = <ThrowOnError extends boolean = false>(options: Options<CreateSubscriptionData, ThrowOnError>) => (options.client ?? client).post<CreateSubscriptionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/api/subscriptions',
     ...options,
     headers: {
@@ -51,8 +42,4 @@ export const createSubscription = <ThrowOnError extends boolean = false>(options
     }
 });
 
-export const deleteSubscription = <ThrowOnError extends boolean = false>(options: Options<DeleteSubscriptionData, ThrowOnError>) => (options.client ?? client).delete<DeleteSubscriptionResponses, unknown, ThrowOnError>({
-    security: [{ scheme: 'bearer', type: 'http' }],
-    url: '/api/subscriptions/{id}',
-    ...options
-});
+export const deleteSubscription = <ThrowOnError extends boolean = false>(options: Options<DeleteSubscriptionData, ThrowOnError>) => (options.client ?? client).delete<DeleteSubscriptionResponses, unknown, ThrowOnError>({ url: '/api/subscriptions/{id}', ...options });

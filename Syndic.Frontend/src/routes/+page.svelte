@@ -51,7 +51,10 @@
 <svelte:boundary>
   <div class="flex flex-col justify-center items-center">
     <div class="pb-4">
-      <Button variant="outline" class="text-xs" onclick={async () => await getFeedRemote().refresh()}
+      <Button
+        variant="outline"
+        class="text-xs"
+        onclick={async () => await getFeedRemote().refresh()}
         >Refresh Feed</Button
       >
     </div>
@@ -68,7 +71,7 @@
           </a>
           <div>From: {itemData.channel.title}</div> -->
             <div class="flex w-full max-w-md flex-col gap-6">
-              <Item.Root variant="outline">
+              <Item.Root variant="outline" class="">
                 <Item.Content
                   class="text-pretty"
                   style="word-break: break-word;"
@@ -78,6 +81,16 @@
                       {itemData.item.title}
                     </a>
                   </Item.Title>
+                  {#if itemData.item.imageUrl}
+                    <div>
+                      <img
+                        src={itemData.item.imageUrl ?? ""}
+                        alt="Article media"
+                        class="rounded-sm"
+                      />
+                    </div>
+                  {/if}
+
                   <Item.Description>
                     {@html DOMPurify.sanitize(itemData.item.summary ?? "", {
                       ALLOWED_TAGS: ["a"],
