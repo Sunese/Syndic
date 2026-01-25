@@ -83,8 +83,7 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
-// Web/Presentation
-builder.AddOpenApi();
+builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
