@@ -118,10 +118,6 @@ else if (builder.ExecutionContext.IsPublishMode)
                             .WithContainerBuildOptions(opts =>
                             {
                               opts.TargetPlatform = ContainerTargetPlatform.AllLinux;
-                              // this ensures the image gets pushed to the local docker registry
-                              // EDIT: BUT this makes github runners fail for some reason...
-                              // https://github.com/Sunese/Syndic/actions/runs/20346066527/job/58458546353#step:6:113
-                              // I just tried enabling containerd snapshotter, let's see how that goes
                               opts.ImageFormat = ContainerImageFormat.Docker;
                             })
                             .WithRemoteImageName("frontend")
