@@ -23,7 +23,7 @@
     "@tailwindcss/vite": "^4.1.18",
     "@types/node": "^25.0.10",
     "@vitejs/plugin-basic-ssl": "^2.1.4",
-    "autoprefixer": "^10.4.23",
+    "autoprefixer": "^10.4.24",
     "bits-ui": "^2.15.4",
     "clsx": "^2.1.1",
     "svelte": "^5.48.2",
