@@ -13,7 +13,7 @@
     "openapi-ts": "NODE_TLS_REJECT_UNAUTHORIZED=0 openapi-ts"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "0.90.10",
+    "@hey-api/openapi-ts": "0.91.1",
     "@internationalized/date": "^3.10.1",
     "@lucide/svelte": "^0.563.1",
     "@sveltejs/adapter-auto": "^7.0.0",
