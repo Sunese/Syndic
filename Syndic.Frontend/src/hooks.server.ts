@@ -8,14 +8,19 @@ import { mintInternalJwt } from "$lib/server/jwt";
 import { jwtVerify } from "jose";
 
 const redirectIfNotAuthenticated = async ({ event, resolve }: any) => {
-  // Protect all routes other than /signin
-  if (!event.url.pathname.startsWith('/signin')) {
-    const session = await event.locals.auth();
-    if (!session) {
-      console.log("No session found, redirecting to /signin");
-      redirect(303, `/signin`);
-    }
+  const session = await event.locals.auth();
+
+  // Redirect authenticated users away from /signin to the front page
+  if (event.url.pathname.startsWith('/signin') && session) {
+    redirect(303, `/`);
   }
+
+  // Protect all routes other than /signin
+  if (!event.url.pathname.startsWith('/signin') && !session) {
+    console.log("No session found, redirecting to /signin");
+    redirect(303, `/signin`);
+  }
+
   return resolve(event);
 }
 

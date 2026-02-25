@@ -32,7 +32,7 @@
             <Button
               variant="outline"
               type="button"
-              onclick={() => signIn("github")}
+              onclick={() => signIn("github", { redirectTo: "/" })}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -52,7 +52,7 @@
             <Button
               variant="outline"
               type="button"
-              onclick={() => signIn("google")}
+              onclick={() => signIn("google", { redirectTo: "/" })}
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path

@@ -49,31 +49,29 @@
     }}
   >
     <!-- navbar -->
-    <div class="p-5 flex justify-between items-center">
+    <div class="p-4 sm:p-5 flex justify-between items-center gap-2">
       {#if data.session}
-        <a class="text-3xl font-bold" href="/">Syndic 🛜</a>
+        <a class="text-xl sm:text-3xl font-bold shrink-0" href="/">Syndic 🛜</a>
       {:else}
         <a
-          class="text-3xl font-bold"
+          class="text-xl sm:text-3xl font-bold shrink-0"
           data-sveltekit-preload-data="tap"
           href="/signin">Syndic</a
         >
       {/if}
-      <div class="flex justify-center items-center space-x-4">
-        <div class="flex items-center justify-center w-28">
-          {#if !data.session}
-            {#if signInClicked}
-              <Spinner class="size.3" />
-            {:else}
-              <Button onclick={async () => goto("/signin")}>Sign In</Button>
-            {/if}
+      <div class="flex items-center gap-1.5 sm:gap-4 min-w-0">
+        {#if !data.session}
+          {#if signInClicked}
+            <Spinner class="size.3" />
+          {:else}
+            <Button onclick={async () => goto("/signin")}>Sign In</Button>
           {/if}
-        </div>
+        {/if}
         {#if data.session}
-          <a href="/subscriptions" class="text-lg hover:underline font-bold"
+          <a href="/subscriptions" class="text-xs sm:text-lg hover:underline font-bold whitespace-nowrap"
             >Subscriptions</a
           >
-          <Button onclick={async () => await signOut()}>Sign out</Button>
+          <Button size="sm" class="sm:size-default whitespace-nowrap" onclick={async () => await signOut()}>Sign out</Button>
         {/if}
         <DarkModeToggler />
       </div>

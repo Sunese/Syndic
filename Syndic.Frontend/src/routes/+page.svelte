@@ -1,5 +1,6 @@
 <script lang="ts">
   import { getFeedRemote } from "../remote/feed.remote";
+  import { createSubRemote } from "../remote/subscription.remote";
   import type { PageProps } from "./$types";
   import Button from "$lib/components/ui/button/button.svelte";
   import { Skeleton } from "$lib/components/ui/skeleton/index.js";
@@ -7,8 +8,16 @@
   import { toast } from "svelte-sonner";
   import type { ChannelDto, FetchChannelResult, ItemDto } from "../client";
   import * as Item from "$lib/components/ui/item/index.js";
+  import * as AlertDialog from "$lib/components/ui/alert-dialog/index.js";
+  import { Input } from "$lib/components/ui/input";
+  import { Spinner } from "$lib/components/ui/spinner";
+  import { isHttpError } from "@sveltejs/kit";
+  import { Rss } from "@lucide/svelte";
   import DOMPurify from "dompurify";
   let { data }: PageProps = $props();
+
+  let showAddSubDialog: boolean = $state(false);
+  let addingSub: boolean = $state(false);
 
   const getTitle = (res: FetchChannelResult) =>
     res.customTitle ?? res.channelTitle ?? res.channel?.link;
@@ -50,16 +59,18 @@
 
 <svelte:boundary>
   <div class="flex flex-col justify-center items-center">
-    <div class="pb-4">
-      <Button
-        variant="outline"
-        class="text-xs"
-        onclick={async () => await getFeedRemote().refresh()}
-        >Refresh Feed</Button
-      >
-    </div>
-    <div>
-      {#each handleChannels(await getFeedRemote()) as itemData}
+    <div class="w-full">
+      {#each handleChannels(await getFeedRemote()) as itemData, i}
+        {#if i === 0}
+          <div class="pb-4 flex justify-center">
+            <Button
+              variant="outline"
+              class="text-xs"
+              onclick={async () => await getFeedRemote().refresh()}
+              >Refresh Feed</Button
+            >
+          </div>
+        {/if}
         <ul>
           <li class="pb-4">
             <!-- <a
@@ -111,6 +122,103 @@
             </div>
           </li>
         </ul>
+      {:else}
+        <div class="flex flex-col items-center gap-4 py-16 text-center">
+          <Rss class="h-12 w-12 text-muted-foreground" />
+          <h2 class="text-xl font-semibold">No subscriptions yet</h2>
+          <p class="text-sm text-muted-foreground max-w-sm">
+            Add your first RSS feed to start seeing articles here.
+          </p>
+
+          <AlertDialog.Root open={showAddSubDialog}>
+            <Button variant="default" onclick={() => (showAddSubDialog = true)}>
+              Add Subscription
+            </Button>
+            {#if showAddSubDialog}
+              <AlertDialog.Content onclose={() => (showAddSubDialog = false)}>
+                <div class="p-4">
+                  <form
+                    {...createSubRemote.enhance(async ({ form, data, submit }) => {
+                      try {
+                        await createSubRemote.validate({ includeUntouched: true });
+                        const issues = createSubRemote.fields.allIssues();
+                        if (issues && issues.length > 0) return;
+
+                        addingSub = true;
+                        await submit();
+                        form.reset();
+                        showAddSubDialog = false;
+                        addingSub = false;
+                        toast.success("Subscription added!");
+                        getFeedRemote().refresh();
+                      } catch (error) {
+                        showAddSubDialog = false;
+                        addingSub = false;
+                        console.error(error);
+                        toast.error("Oh no! Something went wrong");
+                        if (isHttpError(error)) toast.error(error.body.message);
+                      }
+                    })}
+                    oninput={() => createSubRemote.validate()}
+                  >
+                    <AlertDialog.Header>
+                      <AlertDialog.Title>Add Subscription</AlertDialog.Title>
+                      <AlertDialog.Description>
+                      </AlertDialog.Description>
+                      <label class="pb-4">
+                        <div class="font-bold">URL</div>
+                        <Input
+                          {...createSubRemote.fields.url.as("url")}
+                          placeholder="https://example.com/rss"
+                        />
+                      </label>
+
+                      <label class="pb-4">
+                        <div class="">(Optional) Custom Name</div>
+                        <Input
+                          {...createSubRemote.fields.customTitle.as("text")}
+                          placeholder="My Favourite RSS Feed"
+                        />
+                      </label>
+                    </AlertDialog.Header>
+                    <AlertDialog.Footer class="pt-4">
+                      <Button
+                        variant="secondary"
+                        onclick={() => {
+                          showAddSubDialog = false;
+                        }}
+                        aria-label="Cancel"
+                        type="reset"
+                      >
+                        Cancel
+                      </Button>
+                      {#if addingSub}
+                        <Button
+                          disabled
+                          variant="default"
+                          aria-label="Add subscription"
+                          type="submit"
+                          class="w-36"
+                        >
+                          <Spinner></Spinner>
+                        </Button>
+                      {:else}
+                        <Button
+                          variant="default"
+                          aria-label="Add subscription"
+                          type="submit"
+                          class="w-36"
+                        >
+                          Add Subscription
+                        </Button>
+                      {/if}
+                    </AlertDialog.Footer>
+                  </form>
+                </div>
+              </AlertDialog.Content>
+            {/if}
+          </AlertDialog.Root>
+        </div>
       {/each}
     </div>
   </div>
