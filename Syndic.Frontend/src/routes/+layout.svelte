@@ -89,7 +89,7 @@
       </div>
     {/if}
 
-    <div class="px-10 pb-10">
+    <div class="px-10 pb-10 flex justify-center">
       {@render children()}
     </div>
 
