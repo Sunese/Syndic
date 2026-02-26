@@ -1,2 +1,0 @@
-- Handle linking/merging of accounts. E.g. a user has the same email across different IDPs, and uses both to sign into the app.
-- Remove kid. I don't think we need it.

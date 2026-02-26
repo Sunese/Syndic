@@ -4,4 +4,5 @@
   <Project Path="Syndic.ReaderDbManager/Syndic.ReaderDbManager.csproj" />
   <Project Path="Syndic.ReaderService/Syndic.ReaderService.csproj" />
   <Project Path="Syndic.ServiceDefaults/Syndic.ServiceDefaults.csproj" />
+  <Project Path="Syndic.Tests/Syndic.Tests.csproj" />
 </Solution>

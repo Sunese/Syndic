@@ -1,6 +1,5 @@
 using System.ServiceModel.Syndication;
 using System.Xml;
-using Microsoft.IdentityModel.Tokens;
 using Syndic.ReaderDb.Entities;
 
 namespace Syndic.ReaderService.Rss;
@@ -8,11 +7,12 @@ namespace Syndic.ReaderService.Rss;
 public class RssParser
 {
   private readonly ILogger<RssParser> logger;
-  private readonly HttpClient httpClient = new();
+  private readonly HttpClient httpClient;
 
-  public RssParser(ILogger<RssParser> logger)
+  public RssParser(ILogger<RssParser> logger, HttpClient httpClient)
   {
     this.logger = logger;
+    this.httpClient = httpClient;
   }
 
   public async Task<FetchChannelResult> Parse(Uri uri, Subscription subscription)
@@ -20,7 +20,8 @@ public class RssParser
     try
     {
       logger.LogDebug("Parsing RSS Feed: {Uri}", uri);
-      using var reader = XmlReader.Create(uri.ToString());
+      using var stream = await httpClient.GetStreamAsync(uri);
+      using var reader = XmlReader.Create(stream);
       var feed = SyndicationFeed.Load(reader);
       if (feed is null)
       {

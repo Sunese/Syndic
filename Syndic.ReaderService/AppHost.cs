@@ -17,10 +17,9 @@ builder.AddServiceDefaults();
 
 builder.AddNpgsqlDbContext<ReaderDbContext>("syndicdb");
 
-builder.Services.AddSingleton<RssParser>();
+builder.Services.AddHttpClient<RssParser>();
 
 var internalJwtSecret = builder.Configuration["INTERNAL_JWT_SECRET"];
-System.Console.WriteLine("INTERNAL_JWT_SECRET: " + internalJwtSecret);
 if (string.IsNullOrEmpty(internalJwtSecret))
 {
   throw new InvalidOperationException("INTERNAL_JWT_SECRET is not set ");
@@ -29,9 +28,11 @@ if (string.IsNullOrEmpty(internalJwtSecret))
 var key = new SymmetricSecurityKey(
   Encoding.UTF8.GetBytes(internalJwtSecret)
 );
-key.KeyId = "internal-auth";
 
-IdentityModelEventSource.ShowPII = true;
+if (builder.Environment.IsDevelopment())
+{
+  IdentityModelEventSource.ShowPII = true;
+}
 
 builder.Services
   .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -104,3 +105,6 @@ app.UseAuthorization();
 app.UseUserMiddleware();
 
 app.Run();
+
+// Expose the implicit Program class so WebApplicationFactory<Program> works in tests
+public partial class Program { }

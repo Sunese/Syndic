@@ -10,7 +10,7 @@ export async function mintInternalJwt(user: {
     provider: string;
 }) {
     return await new SignJWT({ provider: user.provider, name: user.name })
-        .setProtectedHeader({ alg: 'HS256', kid: 'internal-auth' })
+        .setProtectedHeader({ alg: 'HS256' })
         .setSubject(user.email)
         .setIssuer('internal-auth')
         .setAudience('aspnet-api')

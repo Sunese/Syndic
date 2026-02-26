@@ -32,9 +32,9 @@ public class UserMiddleware
         return;
       }
 
-      // TODO: do we allow 2 users with same email from different providers?
-      // If yes: we need to fix this
-      // If no: then what if the user is signing in here with a different provider than before, but with the same email?
+      // One account per email, regardless of provider. If the same email is used via GitHub
+      // and Google, they share the same account and subscriptions. OIDCSubject records the
+      // provider used when the account was first created.
       var user = await db.Users
         .FirstOrDefaultAsync(u => u.Email == userEmail);
       if (user is null)
@@ -47,11 +47,20 @@ public class UserMiddleware
           await context.Response.WriteAsync("Unauthorized: Provider claim is missing");
           return;
         }
-        // NOTE: if we add support for other OIDC providers, we should set this properly
         user = new ReaderDb.Entities.User(userEmail, provider);
         db.Users.Add(user);
         await db.SaveChangesAsync();
         logger.LogInformation("Created new user {UserEmail} with ID {UserId}", userEmail, user.Id);
+      }
+      else
+      {
+        var currentProvider = context.User.FindFirst(Constants.ProviderClaim)?.Value;
+        if (currentProvider is not null && currentProvider != user.OIDCSubject)
+        {
+          logger.LogDebug(
+            "User {UserEmail} signed in via {CurrentProvider} but account was created via {StoredProvider}",
+            userEmail, currentProvider, user.OIDCSubject);
+        }
       }
 
       // add user to context items to save a db lookup later if needed
